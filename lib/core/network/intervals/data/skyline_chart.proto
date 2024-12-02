@@ -1,0 +1,9 @@
+syntax = "proto3";
+
+message SkylineChart {
+  uint32 numZones = 1;
+  repeated uint32 width = 2;
+  repeated uint32 intensity = 3;
+  repeated uint32 zone = 4;
+  uint32 type = 5; // WorkoutTarget ordinals: 1 = POWER, 2 = HR, 3 = PACE
+}
