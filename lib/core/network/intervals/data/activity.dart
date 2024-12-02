@@ -40,6 +40,8 @@ class Activity {
 
   double? icuIntensity;
 
+  int? pairedEventId;
+
   SkylineChart? get skylineChartData {
     String? encodedData = skylineChartBytes;
     if (encodedData == null) {
@@ -82,6 +84,7 @@ class Activity {
     this.powerLoad,
     this.hrLoad,
     this.icuIntensity,
+    this.pairedEventId,
   });
 
   factory Activity.fromJson(Map<String, dynamic> json) {
@@ -113,6 +116,7 @@ class Activity {
       powerLoad: json['power_load'],
       hrLoad: json['hr_load'],
       icuIntensity: json['icu_intensity'],
+      pairedEventId: json['paired_event_id'] as int?,
     );
   }
 

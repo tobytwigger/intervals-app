@@ -1,5 +1,5 @@
 class Events {
-  final String id;
+  final int id;
 
   final DateTime? startDate;
 
@@ -18,17 +18,17 @@ class Events {
   final String? category;
 
   final DateTime? endDate;
-  
+
   final String? name;
-  
+
   final String? description;
-  
+
   final bool? indoor;
-  
+
   final bool? notOnFitnessChart;
-  
+
   final bool? showAsNote;
-  
+
   final bool? showOnCtlLine;
 
   final WorkoutDoc? workoutDoc;
@@ -73,13 +73,14 @@ class Events {
     this.icuIntensity,
     this.pairedActivityId,
   });
+
 // TODO Use a better jsn serialization library
   factory Events.fromJson(Map<String, dynamic> json) {
     DateTime _startDateLocal = DateTime.parse(json['start_date_local']);
     DateTime _endDateLocal = DateTime.parse(json['end_date_local']);
 
-    Events event =  Events(
-      id: json['id'] is int ? json['id'].toString() : json['id'] as String,
+    Events event = Events(
+      id: json['id'] is String ? int.parse(json['id']) : json['id'] as int,
       startDate: _startDateLocal,
       icuTrainingLoad: json['icu_training_load'] as int?,
       atl: json['icu_atl'] as double?,
@@ -95,7 +96,9 @@ class Events {
       notOnFitnessChart: json['not_on_fitness_chart'] as bool?,
       showAsNote: json['show_as_note'] as bool?,
       showOnCtlLine: json['show_on_ctl_line'] as bool?,
-      workoutDoc: json['workout_doc'] == null ? null : WorkoutDoc.fromJson(json['workout_doc']),
+      workoutDoc: json['workout_doc'] == null
+          ? null
+          : WorkoutDoc.fromJson(json['workout_doc']),
       sharedEventId: json['shared_event_id'] as int?,
       loadTarget: json['load_target'] as int?,
       timeTarget: json['time_target'] as int?,
@@ -108,28 +111,31 @@ class Events {
     return event;
   }
 
+  bool get isInPast =>
+      startDate?.isBefore(DateTime(
+          DateTime.now().year, DateTime.now().month, DateTime.now().day)) ??
+      true;
 }
 
 class WorkoutDoc {
-  
   final int? distance;
-  
+
   final int? duration;
-  
+
   final String? description;
-  
+
   final int? averageWatts;
-  
+
   final int? normalizedPower;
-  
+
   final double? variabilityIndex;
-  
+
   final double? polarizationIndex;
 
   final List<ZoneTimes> zoneTimes;
 
   final List<StepEntry> steps;
-  
+
   WorkoutDoc({
     this.steps = const [],
     this.distance,
@@ -141,13 +147,15 @@ class WorkoutDoc {
     this.variabilityIndex,
     this.polarizationIndex,
   });
-  
+
   factory WorkoutDoc.fromJson(Map<String, dynamic> json) {
     return WorkoutDoc(
       steps: (json['steps'] as List).map((i) => StepEntry.fromJson(i)).toList(),
       distance: json['distance'],
       duration: json['duration'],
-      zoneTimes: ((json['zoneTimes'] ?? []) as List).map((i) => ZoneTimes.fromJson(i)).toList(),
+      zoneTimes: ((json['zoneTimes'] ?? []) as List)
+          .map((i) => ZoneTimes.fromJson(i))
+          .toList(),
       description: json['description'],
       averageWatts: json['averageWatts'],
       normalizedPower: json['normalizedPower'],
@@ -155,40 +163,39 @@ class WorkoutDoc {
       polarizationIndex: json['polarizationIndex'],
     );
   }
-
 }
 
 class ZoneTimes {
   final String id;
-  
+
   final int? max;
-  
+
   final String? name;
-  
+
   final int? secs;
-  
+
   final int? zone;
-  
+
   final String? color;
-  
+
   final int? maxWatts;
-  
+
   final int? minWatts;
-  
+
   final String? percentRange;
-  
+
   ZoneTimes({
     required this.id,
-     this.max,
-     this.name,
-     this.secs,
-     this.zone,
-     this.color,
-     this.maxWatts,
-     this.minWatts,
-     this.percentRange,
+    this.max,
+    this.name,
+    this.secs,
+    this.zone,
+    this.color,
+    this.maxWatts,
+    this.minWatts,
+    this.percentRange,
   });
-  
+
   factory ZoneTimes.fromJson(Map<String, dynamic> json) {
     return ZoneTimes(
       id: json['id'],
@@ -215,7 +222,7 @@ class StepEntry {
   });
 
   factory StepEntry.fromJson(Map<String, dynamic> json) {
-    if(json['reps'] != null) {
+    if (json['reps'] != null) {
       return StepEntry(
         stepRepeat: StepRepeat.fromJson(json),
       );
@@ -297,9 +304,15 @@ class Power {
   factory Power.fromJson(Map<String, dynamic> json) {
     return Power(
       units: json['units'] as String,
-      value: (json['value'] is int) ? json['value'].toDouble() : json['value'] as double?,
-      max: (json['value'] is int) ? json['value'].toDouble() : json['value'] as double?,
-      min: (json['value'] is int) ? json['value'].toDouble() : json['value'] as double?,
+      value: (json['value'] is int)
+          ? json['value'].toDouble()
+          : json['value'] as double?,
+      max: (json['value'] is int)
+          ? json['value'].toDouble()
+          : json['value'] as double?,
+      min: (json['value'] is int)
+          ? json['value'].toDouble()
+          : json['value'] as double?,
     );
   }
 }
