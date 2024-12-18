@@ -17,7 +17,7 @@ class Wellness {
     this.atl,
     this.rampRate,
     this.ctlLoad,
-    this.atlLoad
+    this.atlLoad,
   });
 
   factory Wellness.fromJson(Map<String, dynamic> json) {
@@ -27,7 +27,7 @@ class Wellness {
         atl: json['atl'],
         rampRate: json['rampRate'],
         ctlLoad: json['ctlLoad'],
-        atlLoad: json['atlLoad']
+        atlLoad: json['atlLoad'],
     );
   }
 }

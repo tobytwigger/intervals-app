@@ -1,3 +1,5 @@
+import 'package:flutter/foundation.dart';
+
 class Events {
   final int id;
 
@@ -15,7 +17,7 @@ class Events {
 
   final String? athleteId;
 
-  final String? category;
+  final EventCategory? category;
 
   final DateTime? endDate;
 
@@ -47,6 +49,14 @@ class Events {
 
   final String? pairedActivityId;
 
+  final int? joules;
+
+  final int? joulesAboveFtp;
+
+  final int? movingTime;
+
+  final String? color;
+
   Events({
     required this.id,
     this.startDate,
@@ -72,6 +82,10 @@ class Events {
     this.distance,
     this.icuIntensity,
     this.pairedActivityId,
+    this.joules,
+    this.joulesAboveFtp,
+    this.movingTime,
+    this.color,
   });
 
 // TODO Use a better jsn serialization library
@@ -88,7 +102,7 @@ class Events {
       type: json['type'] as String?,
       uid: json['uid'] as String?,
       athleteId: json['athlete_id'] as String?,
-      category: json['category'] as String?,
+      category: EventCategory.values.byName((json['category'] as String).toLowerCase()), // TODO Catch if this errors
       endDate: _endDateLocal,
       name: json['name'] as String?,
       description: json['description'] as String?,
@@ -96,6 +110,8 @@ class Events {
       notOnFitnessChart: json['not_on_fitness_chart'] as bool?,
       showAsNote: json['show_as_note'] as bool?,
       showOnCtlLine: json['show_on_ctl_line'] as bool?,
+      movingTime: json['moving_time'] as int?,
+      color: json['color'] as String?,
       workoutDoc: json['workout_doc'] == null
           ? null
           : WorkoutDoc.fromJson(json['workout_doc']),
@@ -106,6 +122,8 @@ class Events {
       distance: json['distance'] as double?,
       icuIntensity: json['icu_intensity'] as double?,
       pairedActivityId: json['paired_activity_id'] as String?,
+      joules: json['joules'] as int?,
+      joulesAboveFtp: json['joules_above_ftp'] as int?,
     );
 
     return event;
@@ -115,6 +133,7 @@ class Events {
       startDate?.isBefore(DateTime(
           DateTime.now().year, DateTime.now().month, DateTime.now().day)) ??
       true;
+
 }
 
 class WorkoutDoc {
@@ -231,6 +250,30 @@ class StepEntry {
       step: Step.fromJson(json),
     );
   }
+
+  int? get duration {
+    if (step != null) {
+      return step!.duration;
+    }
+
+    if (stepRepeat != null) {
+      return stepRepeat!.duration;
+    }
+
+    return null;
+  }
+
+  Power? get power {
+    if (step != null) {
+      return step!.power;
+    }
+
+    if (stepRepeat != null) {
+      return stepRepeat!.steps.first.power;
+    }
+
+    return null;
+  }
 }
 
 class StepRepeat {
@@ -266,20 +309,20 @@ class StepRepeat {
 class Step {
   final Power? power;
 
-  final bool? warmup;
+  final bool warmup;
 
   final int? duration;
 
   Step({
     this.power,
-    this.warmup,
+    this.warmup = false,
     this.duration,
   });
 
   factory Step.fromJson(Map<String, dynamic> json) {
     return Step(
       power: Power.fromJson(json['power']),
-      warmup: json['warmup'],
+      warmup: json['warmup'] ?? false,
       duration: json['duration'],
     );
   }
@@ -315,4 +358,10 @@ class Power {
           : json['value'] as double?,
     );
   }
+}
+
+
+// TODO Ensure I've captured all the possible values, and handle the case where the value is not found
+enum EventCategory {
+  target, race_a, race_b, race_c, note,workout, season_start, sick;
 }

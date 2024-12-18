@@ -2,6 +2,7 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:intervals/core/network/intervals/data/wellness.dart';
 import 'package:intervals/data/repositories/authenticated_user_model.dart';
+import 'package:intervals/ui/forms/date_range_selector.dart';
 import 'package:intervals/ui/partials/nav_drawer.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
@@ -90,46 +91,6 @@ class WellnessSummary extends StatelessWidget {
       children: [
         Text('Fitness: ${today.ctl}'),
         Text('Fatigue: ${today.atl}'),
-      ],
-    );
-  }
-}
-
-class ChooseDateRange extends StatelessWidget {
-  final DateTime oldest;
-
-  final DateTime newest;
-
-  void Function(DateTime oldest, DateTime newest)? updateOldestAndNewestDates;
-
-  ChooseDateRange(
-      {super.key,
-      required this.oldest,
-      required this.newest,
-      this.updateOldestAndNewestDates});
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.end,
-      children: [
-        Text(DateFormat('dd/MM/yyyy').format(oldest)),
-        const Text(' - '),
-        Text(DateFormat('dd/MM/yyyy').format(newest)),
-        IconButton(
-            onPressed: () {
-              showDateRangePicker(
-                context: context,
-                initialDateRange: DateTimeRange(start: oldest, end: newest),
-                firstDate: DateTime(1990, 1, 1),
-                lastDate: DateTime(2040, 1, 1),
-              ).then((range) {
-                if (updateOldestAndNewestDates != null && range != null) {
-                  updateOldestAndNewestDates!(range.start, range.end);
-                }
-              });
-            },
-            icon: const Icon(Icons.edit)),
       ],
     );
   }

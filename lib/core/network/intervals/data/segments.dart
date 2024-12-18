@@ -1,0 +1,7 @@
+class Intervals {
+
+}
+
+class Segments {
+
+}

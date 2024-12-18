@@ -89,7 +89,7 @@ class ActivityLine extends StatelessWidget {
   Widget build(BuildContext context) {
     return ListTile(
       onTap: () {
-        GoRouter.of(context).push('/activities/${activity.id}');
+        GoRouter.of(context).push('/activity/${activity.id}');
       },
       title: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -114,6 +114,7 @@ class ActivityLine extends StatelessWidget {
     );
   }
 }
+
 
 class SkylineChartData {
   final double width;

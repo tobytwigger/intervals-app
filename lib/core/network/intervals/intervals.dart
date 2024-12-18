@@ -6,6 +6,8 @@ import 'package:intervals/core/network/intervals/data/activity.dart';
 import 'package:intervals/core/network/intervals/data/athlete.dart';
 import 'package:intervals/core/network/intervals/data/events.dart';
 import 'package:intervals/core/network/intervals/data/map.dart';
+import 'package:intervals/core/network/intervals/data/streams.dart';
+import 'package:intervals/core/network/intervals/data/weather.dart';
 import 'package:intervals/core/network/intervals/data/wellness.dart';
 import 'package:intl/intl.dart';
 
@@ -137,7 +139,11 @@ class Intervals {
   }
 
   Future<Wellness> getCurrentWellnessData() async {
-    String date = DateFormat('yyyy-MM-dd').format(DateTime.now());
+    return await getWellnessDataForDay(DateTime.now());
+  }
+
+  Future<Wellness> getWellnessDataForDay(DateTime day) async {
+    String date = DateFormat('yyyy-MM-dd').format(day);
 
     final response = await http.get(
       Uri.parse('https://intervals.icu/api/v1/athlete/${athleteId}/wellness/${date}'),
@@ -190,6 +196,146 @@ class Intervals {
       // If the server did not return a 200 OK response,
       // then throw an exception.
       throw Exception('Failed to load events data');
+    }
+  }
+
+  Future<List<AthleteSummary>> getAthleteSummary({
+    DateTime? start,
+    DateTime? end
+  }) async {
+    var queryParams = Map.of({
+      'start': null as String?,
+      'end': null as String?
+    });
+    if(start != null) {
+      queryParams['start'] = DateFormat('yyyy-MM-dd').format(start);
+    }
+    if(end != null) {
+      queryParams['end'] = DateFormat('yyyy-MM-dd').format(end);
+    }
+
+    final response = await http.get(
+      Uri.parse('https://intervals.icu/api/v1/athlete/${athleteId}/athlete-summary')
+          .replace(
+            queryParameters: queryParams
+      ),
+      headers: {HttpHeaders.authorizationHeader: 'Basic ${authToken}'},
+    );
+
+    if (response.statusCode == 200) {
+      var athleteSummaries = jsonDecode(response.body) as List<dynamic>;
+
+      // Sort summaries by start date
+      athleteSummaries.sort((a, b) => a['date'].compareTo(b['date']));
+
+      return athleteSummaries
+          .where((athleteSummary) => athleteSummary['athlete_id'] == athleteId) // Filter all athletes but me
+          .map((athleteSummary) => AthleteSummary.fromJson(athleteSummary as Map<String, dynamic>)).toList();
+    } else {
+      // If the server did not return a 200 OK response,
+      // then throw an exception.
+      throw Exception('Failed to load athlete summaries');
+    }
+  }
+
+  Future<Weather> getWeatherSummaryForActivity(String activityId) async {
+    final response = await http.get(
+      Uri.parse('https://intervals.icu/api/v1/activity/${activityId}/weather-summary'),
+      headers: {HttpHeaders.authorizationHeader: 'Basic ${authToken}'},
+    );
+
+    if (response.statusCode == 200) {
+      return Weather.fromJson(jsonDecode(response.body) as Map<String, dynamic>);
+    } else {
+      // If the server did not return a 200 OK response,
+      // then throw an exception.
+      throw Exception('Failed to load activity weather summary');
+    }
+  }
+
+  Future<List<StreamEntry>> getStreamsForActivity(String activityId, List<DefaultStreams> streams) async {
+    final response = await http.get(
+      Uri.parse('https://intervals.icu/api/v1/activity/${activityId}/streams')
+          .replace(
+          queryParameters: {
+            'types': streams.map((stream) => stream.name).join(','),
+          }
+      ),
+      headers: {HttpHeaders.authorizationHeader: 'Basic ${authToken}'},
+    );
+
+    if (response.statusCode == 200) {
+      var json = jsonDecode(response.body) as List<dynamic>;
+      List<FullStream> fullStreams = [];
+      for(var j in json) {
+        if(j['valueType'] == 'java.lang.Integer') {
+          fullStreams.add(FullStream<int>.fromJson(j));
+        } else if(j['valueType'] == 'java.lang.Float') {
+          fullStreams.add(FullStream<double>.fromJson(j));
+        } else {
+          throw Exception('Unsupported type of ${j['valueType'].toString()}');
+        }
+      }
+
+      // Check all streams have the same length
+      int? length = null;
+      for(var stream in fullStreams) {
+        if(length == null) {
+          length = stream.data.length;
+        } else {
+          assert(stream.data.length == length);
+        }
+      }
+
+      List<StreamEntry> entries = [];
+      // Iterate through [length]
+      for (var i = 0; i < (length ?? 0); i++) {
+        StreamEntry streamEntry = StreamEntry();
+        for(var stream in fullStreams) {
+          streamEntry = stream.addToEntry(streamEntry, i);
+        }
+        entries.add(streamEntry);
+      }
+
+      return entries;
+    } else {
+      // If the server did not return a 200 OK response,
+      // then throw an exception.
+      throw Exception('Failed to load activity weather summary');
+    }
+  }
+
+  Future<Events?> getEventById({required int eventId}) async {
+    final response = await http.get(
+      Uri.parse('https://intervals.icu/api/v1/athlete/${athleteId}/events/${eventId}'),
+      headers: {HttpHeaders.authorizationHeader: 'Basic ${authToken}'},
+    );
+
+    if (response.statusCode == 200) {
+      return Events.fromJson(jsonDecode(response.body) as Map<String, dynamic>);
+    } else if(response.statusCode == 404) {
+      return null;
+    } else {
+      // If the server did not return a 200 OK response,
+      // then throw an exception.
+      throw Exception('Failed to load events data');
+    }
+  }
+
+  Future<WeatherForecast> getWeatherForecast() async {
+    final response = await http.get(
+      Uri.parse('https://intervals.icu/api/v1/athlete/${athleteId}/weather-forecast'),
+      headers: {HttpHeaders.authorizationHeader: 'Basic ${authToken}'},
+    );
+
+    List<dynamic> forecasts = (jsonDecode(response.body) as Map<String, dynamic>)['forecasts'] as List<dynamic>;
+
+    if (response.statusCode == 200) {
+      return WeatherForecast.fromJson((forecasts.first)! as Map<String, dynamic>);
+    } else {
+      // If the server did not return a 200 OK response,
+      // then throw an exception.
+      throw Exception('Failed to load weather forecast');
     }
   }
 }

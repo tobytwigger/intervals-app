@@ -1,3 +1,4 @@
+// Openapi Generator last run: : 2024-12-03T21:03:21.446734
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:go_router/go_router.dart';
@@ -7,9 +8,16 @@ import 'package:intervals/data/repositories/authenticated_user_model.dart';
 import 'package:intervals/screens/activities_index.dart';
 import 'package:intervals/screens/activities_show.dart';
 import 'package:intervals/screens/auth.dart';
-import 'package:intervals/screens/calendar.dart';
+import 'package:intervals/screens/schedule.dart';
+import 'package:intervals/screens/curves.dart';
+import 'package:intervals/screens/event_show.dart';
 import 'package:intervals/screens/fitness.dart';
+import 'package:intervals/screens/goal_index.dart';
+import 'package:intervals/screens/goals_show.dart';
+import 'package:intervals/screens/profile.dart';
+import 'package:intervals/screens/settings.dart';
 import 'package:intervals/screens/today.dart';
+import 'package:intervals/screens/totals.dart';
 import 'package:intervals/services/notifications.dart';
 import 'package:intervals/widget/widget_home.dart';
 import 'package:provider/provider.dart';
@@ -113,25 +121,63 @@ class MyApp extends StatelessWidget {
       },
       navigatorKey: _rootNavigatorKey,
       routes: [
+        GoRoute(path: '/', redirect: (_, __) => '/today'),
+
         GoRoute(path: '/login', builder: (context, state) => const LoginPage()),
         GoRoute(path: '/today', builder: (context, state) => const TodayPage()),
-        GoRoute(path: '/calendar', builder: (context, state) => const CalendarPage()),
-        GoRoute(path: '/', redirect: (_, __) => '/activities'),
+        GoRoute(
+            path: '/event/:id',
+            builder: (context, state) {
+              // TODO Make typesafe
+              final int eventId = int.parse(state.pathParameters['id']!);
+              return EventShowPage(eventId: eventId);
+            }
+
+        ),
+        GoRoute(
+            path: '/schedule',
+            builder: (context, state) => const SchedulePage(),
+        ),
+        GoRoute(
+            path: '/activity/:id',
+            builder: (context, state) {
+              // TODO Make typesafe
+              final String activityId = state.pathParameters['id']!;
+              return ActivitiesShowPage(activityId: activityId);
+            }),
+
+
         GoRoute(path: '/fitness', builder: (context, state) => FitnessPage()),
         GoRoute(
-            path: '/activities',
-            builder: (context, state) => const ActivitiesIndexPage(),
+          path: '/curves',
+          builder: (context, state) => CurvesPage()
+        ),
+        GoRoute(
+          path: '/totals',
+          builder: (context, state) => TotalsPage()
+        ),
+        GoRoute(
+            path: '/goals',
+            builder: (context, state) => const GoalsPage(),
             routes: [
               GoRoute(
-                  path: '/:id',
-                  builder: (context, state) {
-                    // TODO Make typesafe
-                    final String activityId = state.pathParameters['id']!;
-                    return ActivitiesShowPage(activityId: activityId);
-                  }),
-            ]),
+                path: '/:id',
+                builder: (context, state) {
+                  // TODO Make typesafe
+                  final int goalId = int.parse(state.pathParameters['id']!);
+                  return GoalsShowPage(goalId: goalId);
+                }),
+            ]
+        ),
 
-        // GoRoute(path: '/login', builder: (context, state) => const LoginPage())
+        GoRoute(
+            path: '/profile',
+            builder: (context, state) => const ProfilePage(),
+        ),
+        GoRoute(
+          path: '/settings',
+          builder: (context, state) => const SettingsPage()
+        )
       ]);
 
   // This widget is the root of your application.

@@ -29,8 +29,6 @@ class _LoginFormState extends State<LoginForm> {
   void initState() {
     super.initState();
 
-    athleteIdController.text = 'i180571';
-    apiKeyController.text = '65fl98qb1tljbmzy5pgohktj5';
     // Start listening to changes.
     // apiKeyController.addListener(_login);
   }
@@ -42,6 +40,25 @@ class _LoginFormState extends State<LoginForm> {
       key: _formKey,
       child: Column(
         children: <Widget>[
+
+          Row(
+            children: [
+              FloatingActionButton(
+                onPressed: () {
+                },
+                child: const Text(
+                  'Toby'
+                ),
+              ),
+              FloatingActionButton(
+                onPressed: () {
+                },
+                child: const Text(
+                    'Carys'
+                ),
+              ),
+            ],
+          ),
 
           // A text box
           TextFormField(
