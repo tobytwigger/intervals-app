@@ -24,7 +24,14 @@ class _TodayPageState extends State<TodayPage> {
     return Scaffold(
         drawer: const NavDrawer(),
         appBar: AppBar(title: const Text('Today')),
-        body: TodayPageView(date: date));
+        body: TodayPageView(
+            date: date,
+            onDateChange: (newDate) {
+              setState(() {
+                date = newDate;
+              });
+            },
+        ));
   }
 }
 
@@ -37,7 +44,10 @@ class _TodayPageState extends State<TodayPage> {
 class TodayPageView extends StatefulWidget {
   final DateTime date;
 
-  const TodayPageView({super.key, required this.date});
+  // Callback for when the date changes
+  final ValueChanged<DateTime> onDateChange;
+
+  const TodayPageView({super.key, required this.date, required this.onDateChange});
 
   @override
   State<TodayPageView> createState() => _TodayPageViewState();
@@ -78,29 +88,28 @@ class _TodayPageViewState extends State<TodayPageView> {
                         ? Column(
                             children: [
                               ChangeDate(
-                                date: date,
-                                onDateChange: (newDate) {
-                                  setState(() {
-                                    date = newDate;
-                                    wellness = null;
-                                    events = null;
-                                  });
-                                  _loadTodayData();
-                                },
+                                date: widget.date,
+                                onDateChange: widget.onDateChange,
                               ),
                               PageView(
                                   controller: _pageViewController,
                                   onPageChanged: (currentPageIndex) {
-                                    _pa.index = currentPageIndex;
-                                    setState(() {
-                                      _currentPageIndex = currentPageIndex;
-                                    });
+                                    print('Page changed to $currentPageIndex');
+                                    // _pa.index = currentPageIndex;
+                                    // setState(() {
+                                    //   _currentPageIndex = currentPageIndex;
+                                    // });
                                   },
                                   children: <Widget>[
+                                    TodayLoadingPage(),
+                                    TodayLoadingPage(),
                                     Today(
                                         wellness: wellness!,
                                         events: events!,
-                                        forecast: weatherForecast)
+                                        forecast: weatherForecast
+                                    ),
+                                    TodayLoadingPage(),
+                                    TodayLoadingPage()
                                   ])
                             ],
                           )
@@ -114,15 +123,15 @@ class _TodayPageViewState extends State<TodayPageView> {
     var model = Provider.of<AuthenticatedUserModel>(context, listen: false);
     var client = model.getIntervalsClient()!;
 
-    var _wellnessFuture = client.getWellnessDataForDay(date);
+    var _wellnessFuture = client.getWellnessDataForDay(widget.date);
     var _eventsFuture = client.getEvents(
-      oldest: date,
-      newest: date,
+      oldest: widget.date,
+      newest: widget.date,
     );
 
     // Check if the weather date is within two weeks of today
     Future<WeatherForecast?> _weatherFuture = Future.value(null);
-    if (date.difference(DateTime.now()).abs().inDays < 14) {
+    if (widget.date.difference(DateTime.now()).abs().inDays < 14) {
       _weatherFuture = client.getWeatherForecast();
     }
 
@@ -134,6 +143,17 @@ class _TodayPageViewState extends State<TodayPageView> {
       events = _events;
       weatherForecast = _weather;
     });
+  }
+}
+
+class TodayLoadingPage extends StatelessWidget {
+  const TodayLoadingPage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return const Center(
+      child: CircularProgressIndicator(),
+    );
   }
 }
 
@@ -244,3 +264,4 @@ class WeatherWidget extends StatelessWidget {
     );
   }
 }
+

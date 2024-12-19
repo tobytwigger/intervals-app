@@ -23,6 +23,7 @@ import 'package:intervals/widget/widget_home.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:workmanager/workmanager.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 @pragma('vm:entry-point') // Mandatory if the App is obfuscated or using Flutter 3.1+
 void callbackDispatcher() {
@@ -76,6 +77,8 @@ print(oldest.toString());
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Notifications.init();
+
+  await dotenv.load();
 
   Workmanager().initialize(
       callbackDispatcher, // The top level function, aka callbackDispatcher

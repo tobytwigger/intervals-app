@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intervals/data/repositories/authenticated_user_model.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class LoginForm extends StatefulWidget {
   const LoginForm({super.key});
@@ -45,6 +46,8 @@ class _LoginFormState extends State<LoginForm> {
             children: [
               FloatingActionButton(
                 onPressed: () {
+                  athleteIdController.text = dotenv.env['TOBY_ATHLETE_ID'] ?? '';
+                  apiKeyController.text = dotenv.env['TOBY_API_KEY'] ?? '';
                 },
                 child: const Text(
                   'Toby'
@@ -52,6 +55,8 @@ class _LoginFormState extends State<LoginForm> {
               ),
               FloatingActionButton(
                 onPressed: () {
+                  athleteIdController.text = dotenv.env['CARYS_ATHLETE_ID'] ?? '';
+                  apiKeyController.text = dotenv.env['CARYS_API_KEY'] ?? '';
                 },
                 child: const Text(
                     'Carys'
