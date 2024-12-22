@@ -162,7 +162,6 @@ class WeatherForecast {
   });
 
   factory WeatherForecast.fromJson(Map<String, dynamic> json) {
-    print(json['provider']);
     return WeatherForecast(
       provider: json['provider'],
       location: json['location'],

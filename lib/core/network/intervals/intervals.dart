@@ -199,6 +199,90 @@ class Intervals {
     }
   }
 
+
+
+  /// Gets all the events from intervals.icu
+  ///
+  /// This function will load all events between [oldest] and [newest]
+  ///
+  /// The events can be filtered by [category], e.g. WORKOUT,NOTES
+  Future<List<WorkoutOrPlan>> getEventsWithActivities({
+    required DateTime oldest,
+    required DateTime newest,
+  }) async {
+
+    final events = await getEvents(
+      oldest: oldest,
+      newest: newest,
+    );
+
+    final activities = await loadActivitiesInDuration(
+      oldest: DateTime(
+        oldest.year,
+        oldest.month,
+        oldest.day,
+        0, 0, 0
+      ),
+      newest: DateTime(
+        newest.year,
+        newest.month,
+        newest.day,
+        23, 59, 59
+      )
+    );
+
+    // TODO Merge into one future to wait for both at the same time
+    // final (events, activities) = await (eventsFuture, activitiesFuture).wait;
+
+    // We need to merge any activities with the events that have the associated plan.
+
+    List<int> eventIdIndex = [];
+    List<int> eventIdsLinkedToActivities = [];
+    final List<WorkoutOrPlan> entries = <WorkoutOrPlan>[];
+
+    // Populate the eventIdIndex
+    for (var event in events) {
+      eventIdIndex.add(event.id);
+
+      // if(event.pairedActivityId == null) {
+      //   entries.add(EventEventEntry(event));
+      // }
+    }
+
+    // Go through each activity
+    for (var activity in activities) {
+      // If the activity has a paired event, and this event is in the eventIdIndex (i.e. has been loaded from the API)
+      if (activity.pairedEventId != null &&
+          eventIdIndex.contains(activity.pairedEventId)) {
+        // Add the activity to the eventIdsLinkedToActivities
+        entries.add(WorkoutOrPlan(
+          activity: activity,
+          event: events.firstWhere((e) => e.id == activity.pairedEventId)!,
+        ));
+        // Add to the used event IDs
+        eventIdsLinkedToActivities.add(activity.pairedEventId!);
+      } else {
+        entries.add(WorkoutOrPlan(
+          activity: activity,
+        ));
+      }
+    }
+
+    // Add any remaining events
+    for (var event in events) {
+      if (!eventIdsLinkedToActivities.contains(event.id)) {
+        entries.add(WorkoutOrPlan(
+          event: event,
+        ));
+      }
+    }
+
+    return entries;
+  }
+
+
+
+
   Future<List<AthleteSummary>> getAthleteSummary({
     DateTime? start,
     DateTime? end
@@ -338,4 +422,13 @@ class Intervals {
       throw Exception('Failed to load weather forecast');
     }
   }
+}
+
+
+class WorkoutOrPlan {
+  final Activity? activity;
+
+  final Events? event;
+
+  WorkoutOrPlan({this.activity, this.event});
 }

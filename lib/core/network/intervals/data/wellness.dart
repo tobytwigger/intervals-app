@@ -1,3 +1,5 @@
+import 'package:intervals/locale/units.dart';
+
 class Wellness {
   final DateTime date;
 
@@ -11,6 +13,10 @@ class Wellness {
 
   final double? atlLoad;
 
+  final Time? sleepTime;
+
+  final int? restingHR;
+
   Wellness({
     required this.date,
     this.ctl,
@@ -18,6 +24,8 @@ class Wellness {
     this.rampRate,
     this.ctlLoad,
     this.atlLoad,
+    this.sleepTime,
+    this.restingHR
   });
 
   factory Wellness.fromJson(Map<String, dynamic> json) {
@@ -28,6 +36,8 @@ class Wellness {
         rampRate: json['rampRate'],
         ctlLoad: json['ctlLoad'],
         atlLoad: json['atlLoad'],
+        sleepTime: json['sleepSecs'] != null ? Time.fromSeconds(json['sleepSecs']) : null,
+        restingHR: json['restingHR']
     );
   }
 }

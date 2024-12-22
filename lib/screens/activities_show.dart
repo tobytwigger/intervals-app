@@ -292,37 +292,37 @@ class ShowActivityDetails extends StatelessWidget {
         ]),
         Row(children: [
           Text('Intensity: '),
-          Text(activity.icuIntensity!.toString())
+          Text(activity.icuIntensity?.toString() ?? 'N/A')
         ]),
-        Row(children: [Text('Source: '), Text(activity.source!)]),
+        Row(children: [Text('Source: '), Text(activity.source ?? 'N/A')]),
         Row(children: [
           Text('Compliance: '),
-          Text(activity.compliance!.toString())
+          Text(activity.compliance?.toString() ?? 'N/A')
         ]),
         Row(children: [
           Text('Max speed: '),
-          Text(activity.maxSpeed!.toString())
+          Text(activity.maxSpeed.toString() ?? 'N/A')
         ]),
-        Row(children: [Text('Type: '), Text(activity.type!)]),
+        Row(children: [Text('Type: '), Text(activity.type ?? 'N/A')]),
         Row(children: [
           Text('Recording Time: '),
-          Text(activity.icuRecordingTime!.toString())
+          Text(activity.icuRecordingTime.toString() ?? 'N/A')
         ]),
         Row(children: [
           Text('Elapsed Time: '),
-          Text(activity.elapsedTime!.toString())
+          Text(activity.elapsedTime.toString() ?? 'N/A')
         ]),
         Row(children: [
           Text('Distance: '),
-          Text(activity.distance!.toString())
+          Text(activity.distance?.display() ?? 'N/A')
         ]),
         Row(children: [
           Text('Moving Time: '),
-          Text(activity.movingTime!.toString())
+          Text(activity.movingTime.toString() ?? 'N/A')
         ]),
         Row(children: [
           Text('Total elevation gain: '),
-          Text(activity.totalElevationGain!.toString())
+          Text(activity.totalElevationGain.toString() ?? 'N/A')
         ]),
       ],
     );

@@ -1,7 +1,11 @@
-import 'package:duration/duration.dart';
 import 'package:flutter/material.dart';
 import 'package:intervals/core/network/intervals/data/events.dart' as intervals;
 import 'package:intervals/data/repositories/authenticated_user_model.dart';
+import 'package:intervals/locale/units.dart';
+import 'package:intervals/ui/colours.dart';
+import 'package:intervals/ui/components/charts/skyline.dart';
+import 'package:intervals/ui/components/stat_display.dart';
+import 'package:intervals/ui/icons/icon.dart';
 import 'package:provider/provider.dart';
 
 class EventShowPage extends StatefulWidget {
@@ -16,9 +20,15 @@ class EventShowPage extends StatefulWidget {
 class _EventShowPageState extends State<EventShowPage> {
   intervals.Events? _event;
 
+  late PageController _pageViewController;
+
+  int _currentIndex = 0;
+
   @override
   void initState() {
     super.initState();
+
+    _pageViewController = PageController();
 
     WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
       loadEventData();
@@ -45,301 +55,232 @@ class _EventShowPageState extends State<EventShowPage> {
   Widget build(BuildContext context) {
     return Scaffold(
         appBar: AppBar(
-            title:
-                Text(_event == null ? 'Loading...' : _event!.name ?? 'Event')),
+            title: Row(
+          children: [
+            Padding(
+              padding: const EdgeInsets.only(right: 8.0),
+              child: Icon(IconRepository.fromSport(_event?.type)),
+            ),
+            Text(_event == null ? 'Loading...' : _event!.name ?? 'Event'),
+          ],
+        )),
+        bottomNavigationBar: BottomNavigationBar(
+            currentIndex: _currentIndex,
+            onTap: (index) {
+              print('Jumping to page $index');
+              _pageViewController.jumpToPage(index);
+            },
+            items: [
+              BottomNavigationBarItem(
+                icon: Icon(Icons.text_fields),
+                label: 'Description',
+              ),
+              BottomNavigationBarItem(
+                icon: Icon(Icons.bar_chart),
+                label: 'Workout',
+              ),
+            ]),
         body: _event == null
             ? CircularProgressIndicator()
-            : Center(
-                child: ListView(
-                  children: [
-                    ListTile(
-                        title: Text('Description'),
-                        subtitle: Text(_event!.description ?? 'N/A')),
-                    ListTile(
-                        title: Text('Date'),
-                        subtitle: Text(
-                            '${_event!.startDate?.toString() ?? 'N/A'} - ${_event!.endDate?.toString() ?? 'N/A'}')),
-                    ListTile(
-                        title: Text('Type'),
-                        subtitle: Text(_event!.category?.toString() ?? 'N/A')),
-                    ListTile(
-                        title: Text('Training Load'),
-                        subtitle:
-                            Text(_event!.icuTrainingLoad?.toString() ?? 'N/A')),
-                    ListTile(
-                        title: Text('Type'),
-                        subtitle: Text(_event!.type?.toString() ?? 'N/A')),
-                    ListTile(
-                        title: Text('Category'),
-                        subtitle: Text(_event!.category?.toString() ?? 'N/A')),
-                    ListTile(
-                        title: Text('Indoor'),
-                        subtitle: Text(_event!.indoor?.toString() ?? 'N/A')),
-                    ListTile(
-                        title: Text('Color'),
-                        subtitle: Text(_event!.color ?? 'N/A')),
-                    ListTile(
-                        title: Text('Moving Time'),
-                        subtitle: _event?.movingTime == null
-                            ? Text('N/A')
-                            : Text(Duration(seconds: _event!.movingTime!)
-                                .pretty(upperTersity: DurationTersity.hour))),
-
-                    // TODO "not_on_fitness_chart": false,
-                    // TODO "show_as_note": false,
-                    // TODO "show_on_ctl_line": false,
-
-                    ListTile(
-                        title: Text('Energy'),
-                        subtitle: Text(
-                            '${_event!.joules} Joules, with ${_event!.joulesAboveFtp} Joules above FTP')),
-
-                    ListTile(
-                        title: Text('Shared Event'),
-                        subtitle:
-                            Text(_event!.sharedEventId?.toString() ?? 'N/A')),
-                    ListTile(
-                        title: Text('Distance'),
-                        subtitle: Text(_event!.distance?.toString() ?? 'N/A')),
-                    ListTile(
-                        title: Text('ICU Intensity'),
-                        subtitle:
-                            Text(_event!.icuIntensity?.toString() ?? 'N/A')),
-                    ListTile(
-                        title: Text('Workout doc targets'),
-                        subtitle: Column(
-                          children: [
-                            Text(
-                                'Distance: ${_event!.workoutDoc?.distance?.toString() ?? 'N/A'}'),
-                            Text(
-                                'Duration: ${_event!.workoutDoc?.duration?.toString() ?? 'N/A'}'),
-                            Text(
-                                'Avg Watts: ${_event!.workoutDoc?.averageWatts?.toString() ?? 'N/A'}'),
-                            Text(
-                                'Normalised Power: ${_event!.workoutDoc?.normalizedPower?.toString() ?? 'N/A'}'),
-                            Text(
-                                'Polarization Index: ${_event!.workoutDoc?.polarizationIndex?.toString() ?? 'N/A'}'),
-                            Text(
-                                'Variability Index: ${_event!.workoutDoc?.variabilityIndex?.toString() ?? 'N/A'}'),
-                            Text(
-                                'Description: ${_event!.workoutDoc?.description?.toString() ?? 'N/A'}'),
-                          ],
-                        )),
-                    ListTile(
-                        title: Text('Workout doc zones'),
-                        subtitle: Column(
-                            children: _event!.workoutDoc?.zoneTimes
-                                    .map((e) => Column(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.start,
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            Text('Zone ${e.zone}',
-                                                style: TextStyle(
-                                                    fontWeight:
-                                                        FontWeight.bold)),
-                                            Padding(
-                                              padding: const EdgeInsets.only(
-                                                  left: 16.0),
-                                              child: Column(
-                                                children: [
-                                                  Text(
-                                                      'Zone ${e.zone}: ${e.name}'),
-                                                  Text(
-                                                      'Time: ${Duration(seconds: e.secs ?? 0).pretty(upperTersity: DurationTersity.hour)}'),
-                                                  Text(
-                                                      'Zones: ${e.minWatts}W - ${e.maxWatts}W'),
-                                                  Text('Max: ${e.max}'),
-                                                  Text('ID: ${e.id}'),
-                                                ],
-                                              ),
-                                            ),
-                                          ],
-                                        ))
-                                    .toList() ??
-                                [])),
-                    ListTile(
-                        title: Text('Activity Graph'),
-                        subtitle:
-                            WorkoutDocShow(workoutDoc: _event!.workoutDoc))
-                  ],
-                ),
-              ));
+            : RefreshIndicator(
+                onRefresh: () async {
+                  await loadEventData();
+                },
+                child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                            children: [
+                              VerticalStatsWidgetEntry(
+                                label: 'Distance',
+                                value: _event!.distance?.toString() ?? 'N/A',
+                              ),
+                              VerticalStatsWidgetEntry(
+                                label: 'Duration',
+                                value: _event!.movingTime?.display() ?? 'N/A',
+                              ),
+                              VerticalStatsWidgetEntry(
+                                  label: 'Load',
+                                  value: _event!.icuTrainingLoad?.toString() ??
+                                      'N/A'),
+                              VerticalStatsWidgetEntry(
+                                  label: 'Intensity',
+                                  value:
+                                      _event!.icuIntensity?.ceil().toString() ??
+                                          'N/A'),
+                            ]),
+                      ),
+                      Expanded(
+                        child: PageView.builder(
+                            onPageChanged: (index) {
+                              setState(() {
+                                _currentIndex = index;
+                              });
+                            },
+                            itemCount: 2,
+                            itemBuilder: (context, index) {
+                              if (index == 0) {
+                                return DescriptionPage(event: _event!);
+                              } else if (index == 1) {
+                                return WorkoutDocPage(event: _event!);
+                              }
+                              return Text('Unknown page');
+                            }),
+                      )
+                    ])));
   }
 }
 
-class WorkoutDocShow extends StatelessWidget {
-  final intervals.WorkoutDoc? workoutDoc;
+class DescriptionPage extends StatelessWidget {
+  final intervals.Events event;
 
-  const WorkoutDocShow({super.key, required this.workoutDoc});
+  DescriptionPage({super.key, required this.event});
 
   @override
   Widget build(BuildContext context) {
-    if (workoutDoc == null) {
+    return Expanded(
+        child: SingleChildScrollView(
+            child: Column(
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            SizedBox(
+              width: MediaQuery.of(context).size.width / 2,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  HorizontalStatsWidgetEntry(
+                    label: 'Avg Watts',
+                    value:
+                        '${event!.workoutDoc?.averageWatts?.toString() ?? 'N/A'}',
+                  ),
+                  HorizontalStatsWidgetEntry(
+                      label: 'Normalised Power',
+                      value:
+                          '${event!.workoutDoc?.normalizedPower?.toString() ?? 'N/A'}'),
+                  HorizontalStatsWidgetEntry(
+                      label: 'Polarization Index',
+                      value:
+                          '${event!.workoutDoc?.polarizationIndex?.toString() ?? 'N/A'}'),
+                  HorizontalStatsWidgetEntry(
+                      label: 'Variability Index',
+                      value:
+                          '${event!.workoutDoc?.variabilityIndex?.toStringAsFixed(2) ?? 'N/A'}'),
+                ],
+              ),
+            ),
+            SizedBox(
+              width: MediaQuery.of(context).size.width / 2,
+              child: Column(
+                  children: event!.workoutDoc?.zoneTimes
+                          .map((zoneTime) => Column(
+                                mainAxisAlignment: MainAxisAlignment.start,
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  ZoneBar(
+                                    zone: zoneTime.id,
+                                    duration:
+                                        Time.fromSeconds(zoneTime.secs ?? 0),
+                                    colour: HexColor.fromHex(
+                                        zoneTime.color ?? '#000000'),
+                                    percentage: zoneTime.secs! /
+                                        event!.movingTime!.duration.inSeconds
+                                            .toDouble(),
+                                  ),
+                                ],
+                              ))
+                          .toList() ??
+                      []),
+            ),
+          ],
+        ),
+        Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Text(event.description ?? 'No description')),
+      ],
+    )));
+  }
+}
+
+class WorkoutDocPage extends StatelessWidget {
+  final intervals.Events event;
+
+  WorkoutDocPage({super.key, required this.event});
+
+  @override
+  Widget build(BuildContext context) {
+    if (event.workoutDoc == null) {
       return Text('No workout doc');
     }
 
-    return WorkoutDocImage(
-      totalSeconds: workoutDoc?.duration ?? 0,
-      steps: workoutDoc?.steps ?? [],
+    return SizedBox(
+      height: 400,
+      child: WorkoutDocImage(
+        totalSeconds: event.workoutDoc?.duration ?? 0,
+        steps: event.workoutDoc?.steps ?? [],
+      ),
     );
   }
 }
 
-class WorkoutDocImage extends StatelessWidget {
-  final List<intervals.StepEntry> steps;
+class ZoneBar extends StatelessWidget {
+  final String zone;
+  final Time duration;
+  final Color colour;
+  final double percentage;
 
-  final int totalSeconds;
-
-  const WorkoutDocImage({
-    super.key,
-    required this.steps,
-    required this.totalSeconds,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (BuildContext context, BoxConstraints constraints) {
-        double maxWidth = constraints.maxWidth == double.infinity
-            ? 400
-            : constraints.maxWidth;
-        double maxHeight = constraints.maxHeight == double.infinity
-            ? 400
-            : constraints.maxHeight;
-
-        List<WorkoutImageEntry> data =
-            createData(steps, maxWidth, maxHeight);
-
-        List<Widget> children = [];
-
-        data.forEach((imageEntry) {
-          children.add(WorkoutDocImageRod(
-            color: imageEntry.color,
-            width: imageEntry.width,
-            height: imageEntry.height,
-          ));
-        });
-
-        return SizedBox(
-            width: maxWidth,
-            height: maxHeight,
-            child: Row(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: children));
-      },
-    );
-  }
-
-  List<WorkoutImageEntry> createData(
-      List<intervals.StepEntry> stepData, double maxWidth, double maxHeight) {
-    int totalTime = 0;
-    intervals.Power? maxPower;
-    for (var step in stepData) {
-      if (step.duration != null) {
-        totalTime += step.duration!;
-      }
-      if ((step.power?.value ?? 0) > (maxPower?.value ?? 0)) {
-        maxPower = step.power;
-      }
-    }
-
-    double horizontalPixelsPerSecond = maxWidth / totalTime;
-    double verticalPixelsPerPowerUnit = maxHeight / maxPower!.value!;
-
-    List<WorkoutImageEntry> data = [];
-
-    for (final intervals.StepEntry step in stepData) {
-      if (step.stepRepeat != null) {
-        for (int i = 0; i < step.stepRepeat!.reps; i++) {
-          for (final intervals.Step s in step.stepRepeat!.steps) {
-            data.add(_convertToWorkoutImageEntry(
-                s, horizontalPixelsPerSecond, verticalPixelsPerPowerUnit));
-          }
-        }
-      } else {
-        data.add(_convertToWorkoutImageEntry(
-            step.step!, horizontalPixelsPerSecond, verticalPixelsPerPowerUnit));
-      }
-    }
-
-    return data;
-  }
-
-  WorkoutImageEntry _convertToWorkoutImageEntry(intervals.Step step,
-      double horizontalPixelsPerSecond, double verticalPixelsPerPowerUnit) {
-    print(verticalPixelsPerPowerUnit);
-    print(step.power?.value);
-    return WorkoutImageEntry(
-      color: step.warmup ? Colors.red : Colors.blue,
-      width: (step.duration?.toDouble() ?? 0) * horizontalPixelsPerSecond,
-      height: (step.power?.value?.toDouble() ?? 0) * verticalPixelsPerPowerUnit,
-    );
-  }
-
-  convertZoneToColour(int zone, int numZones) {
-    if (numZones == 7) {
-      switch (zone) {
-        case 1:
-          return const Color.fromRGBO(0, 158, 128, 1);
-        case 2:
-          return const Color.fromRGBO(0, 158, 0, 1);
-        case 3:
-          return const Color.fromRGBO(255, 203, 14, 1);
-        case 4:
-          return const Color.fromRGBO(255, 127, 14, 1);
-        case 5:
-          return const Color.fromRGBO(221, 4, 71, 1);
-        case 6:
-          return const Color.fromRGBO(102, 51, 204, 1);
-        case 7:
-          return const Color.fromRGBO(80, 72, 97, 1);
-      }
-    }
-    return Colors.blue;
-  }
-}
-
-class WorkoutImageEntry {
-  final Color color;
-
-  final double width;
-
-  final double height;
-
-  WorkoutImageEntry({
-    required this.color,
-    required this.width,
-    required this.height,
-  });
-
-  @override
-  String toString() {
-    return 'WorkoutImageEntry{width: $width, height: $height}';
-  }
-}
-
-class WorkoutDocImageRod extends StatelessWidget {
-  final Color color;
-
-  final double width;
-
-  final double height;
-
-  WorkoutDocImageRod(
+  ZoneBar(
       {super.key,
-      required this.width,
-      required this.height,
-      required this.color});
+      required this.zone,
+      required this.duration,
+      required this.colour,
+      required this.percentage});
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-        color: color,
-        child: SizedBox(
-          width: width,
-          height: height,
-        ));
+    return Padding(
+      padding: const EdgeInsets.symmetric(
+        vertical: 1.0,
+      ),
+      child: Row(
+        children: [
+          Text(zone),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 4.0),
+            child: SizedBox(
+              width: 100,
+              child: Row(
+                children: [
+                  Container(
+                    height: 20,
+                    width: 100 * percentage,
+                    color: colour,
+                  ),
+                  Container(
+                    height: 20,
+                    width: 100 * (1 - percentage),
+                    color: Colors.grey[300],
+                  ),
+                ],
+              ),
+            ),
+          ),
+          // Container(
+          //   height: 20,
+          //   width: 100,
+          //   color: watts > maxWatts ? Colors.red : Colors.green,
+          //   child: Text('$watts'),
+          // ),
+          Padding(
+              padding: EdgeInsets.only(left: 8.0),
+              child: Text(duration.display())),
+        ],
+      ),
+    );
   }
 }

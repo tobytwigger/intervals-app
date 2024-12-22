@@ -1,5 +1,6 @@
 import 'dart:convert';
-import 'package:intervals/lib/core/network/intervals/data/skyline_chart.pb.dart'; // Import the generated Protobuf file
+import 'package:intervals/lib/core/network/intervals/data/skyline_chart.pb.dart';
+import 'package:intervals/locale/units.dart'; // Import the generated Protobuf file
 
 class Activity {
   final String id;
@@ -18,9 +19,9 @@ class Activity {
 
   int? elapsedTime;
 
-  double? distance;
+  Length? distance;
 
-  int? movingTime;
+  Time? movingTime;
 
   double? totalElevationGain;
 
@@ -105,8 +106,8 @@ class Activity {
       icuTrainingLoad: json['icu_training_load'],
       icuRecordingTime: json['icu_recording_time'],
       elapsedTime: json['elapsed_time'],
-      distance: json['distance'],
-      movingTime: json['moving_time'],
+      distance: json['distance'] == null ? null : Length.fromMeters(json['distance']),
+      movingTime: json['moving_time'] != null ? Time(duration: Duration(seconds: json['moving_time'])) : null,
       totalElevationGain: json['total_elevation_gain'],
       maxSpeed: json['max_speed'],
       averageSpeed: json['average_speed'],
@@ -126,5 +127,9 @@ class Activity {
     };
 
     return activityWidgetObj;
+  }
+
+  String toString() {
+    return 'Activity: $name';
   }
 }

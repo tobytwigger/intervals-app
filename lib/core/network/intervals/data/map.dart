@@ -21,7 +21,8 @@ class MapData {
     var listOfBounds = json['bounds'] as List;
 
     return MapData(
-        coordinates: listOfLatLngs.map((i) => LatLng.fromJson(i)).toList(),
+        coordinates: listOfLatLngs.where((i) => i != null)
+            .map((i) => LatLng.fromJson(i)).toList(),
         topLeftBound: LatLng.fromJson(listOfBounds[0]),
         bottomRightBound: LatLng.fromJson(listOfBounds[1]),
     );

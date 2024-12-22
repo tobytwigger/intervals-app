@@ -40,7 +40,7 @@ print('calling with task ${task}');
       if(lastCheckedDatetime != null) {
         oldest = DateTime.parse(lastCheckedDatetime);
       }
-print(oldest.toString());
+
       prefs.setString('notifyAboutNewActivitiesLastChecked', DateTime.now().toIso8601String());
       prefs.remove('notifyAboutNewActivitiesLastChecked');
       // TODO Does this work fine with different timezones?
@@ -127,7 +127,15 @@ class MyApp extends StatelessWidget {
         GoRoute(path: '/', redirect: (_, __) => '/today'),
 
         GoRoute(path: '/login', builder: (context, state) => const LoginPage()),
-        GoRoute(path: '/today', builder: (context, state) => const TodayPage()),
+        GoRoute(path: '/today', builder: (context, state) {
+          print(state.uri.queryParameters);
+          DateTime? initialDisplayDate = null; // may be null
+          if(state.uri.queryParameters['date'] != null) {
+            initialDisplayDate = DateTime.parse(state.uri.queryParameters['date']!); // may be null
+          }
+
+          return TodayPage(initialDisplayDate: initialDisplayDate);
+        }),
         GoRoute(
             path: '/event/:id',
             builder: (context, state) {

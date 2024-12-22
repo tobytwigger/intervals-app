@@ -1,4 +1,4 @@
-import 'package:flutter/foundation.dart';
+import 'package:intervals/locale/units.dart' as unit_locale;
 
 class Events {
   final int id;
@@ -53,7 +53,7 @@ class Events {
 
   final int? joulesAboveFtp;
 
-  final int? movingTime;
+  final unit_locale.Time? movingTime;
 
   final String? color;
 
@@ -102,7 +102,9 @@ class Events {
       type: json['type'] as String?,
       uid: json['uid'] as String?,
       athleteId: json['athlete_id'] as String?,
-      category: EventCategory.values.byName((json['category'] as String).toLowerCase()), // TODO Catch if this errors
+      category: EventCategory.values
+          .byName((json['category'] as String).toLowerCase()),
+      // TODO Catch if this errors
       endDate: _endDateLocal,
       name: json['name'] as String?,
       description: json['description'] as String?,
@@ -110,7 +112,9 @@ class Events {
       notOnFitnessChart: json['not_on_fitness_chart'] as bool?,
       showAsNote: json['show_as_note'] as bool?,
       showOnCtlLine: json['show_on_ctl_line'] as bool?,
-      movingTime: json['moving_time'] as int?,
+      movingTime: (json['moving_time'] as int?) != null
+          ? unit_locale.Time(duration: Duration(seconds: json['moving_time']))
+          : null,
       color: json['color'] as String?,
       workoutDoc: json['workout_doc'] == null
           ? null
@@ -133,7 +137,6 @@ class Events {
       startDate?.isBefore(DateTime(
           DateTime.now().year, DateTime.now().month, DateTime.now().day)) ??
       true;
-
 }
 
 class WorkoutDoc {
@@ -168,18 +171,20 @@ class WorkoutDoc {
   });
 
   factory WorkoutDoc.fromJson(Map<String, dynamic> json) {
+    List<ZoneTimes> localZoneTimes = ((json['zoneTimes'] ?? []) as List)
+        .map((i) => ZoneTimes.fromJson(i))
+        .toList();
+
     return WorkoutDoc(
-      steps: (json['steps'] as List).map((i) => StepEntry.fromJson(i)).toList(),
+      steps: (json['steps'] as List).map((i) => StepEntry.fromJson(i, localZoneTimes)).toList(),
       distance: json['distance'],
       duration: json['duration'],
-      zoneTimes: ((json['zoneTimes'] ?? []) as List)
-          .map((i) => ZoneTimes.fromJson(i))
-          .toList(),
+      zoneTimes: localZoneTimes,
       description: json['description'],
-      averageWatts: json['averageWatts'],
-      normalizedPower: json['normalizedPower'],
-      variabilityIndex: json['variabilityIndex'],
-      polarizationIndex: json['polarizationIndex'],
+      averageWatts: json['average_watts'],
+      normalizedPower: json['normalized_power'],
+      variabilityIndex: json['variability_index'],
+      polarizationIndex: json['polarization_index'],
     );
   }
 }
@@ -240,14 +245,14 @@ class StepEntry {
     this.stepRepeat,
   });
 
-  factory StepEntry.fromJson(Map<String, dynamic> json) {
+  factory StepEntry.fromJson(Map<String, dynamic> json, List<ZoneTimes> zoneTimes) {
     if (json['reps'] != null) {
       return StepEntry(
-        stepRepeat: StepRepeat.fromJson(json),
+        stepRepeat: StepRepeat.fromJson(json, zoneTimes),
       );
     }
     return StepEntry(
-      step: Step.fromJson(json),
+      step: Step.fromJson(json, zoneTimes),
     );
   }
 
@@ -295,11 +300,11 @@ class StepRepeat {
     this.duration,
   });
 
-  factory StepRepeat.fromJson(Map<String, dynamic> json) {
+  factory StepRepeat.fromJson(Map<String, dynamic> json, List<ZoneTimes> zoneTimes) {
     return StepRepeat(
       reps: json['reps'],
       text: json['text'],
-      steps: (json['steps'] as List).map((i) => Step.fromJson(i)).toList(),
+      steps: (json['steps'] as List).map((i) => Step.fromJson(i, zoneTimes)).toList(),
       distance: json['distance'],
       duration: json['duration'],
     );
@@ -311,17 +316,21 @@ class Step {
 
   final bool warmup;
 
+  final bool ramp;
+
   final int? duration;
 
   Step({
     this.power,
     this.warmup = false,
+    this.ramp = false,
     this.duration,
   });
 
-  factory Step.fromJson(Map<String, dynamic> json) {
+  factory Step.fromJson(Map<String, dynamic> json, List<ZoneTimes> zoneTimes) {
     return Step(
-      power: Power.fromJson(json['power']),
+      ramp: (json['ramp'] ?? false) as bool,
+      power: Power.fromJson(json['power'], zoneTimes),
       warmup: json['warmup'] ?? false,
       duration: json['duration'],
     );
@@ -331,37 +340,83 @@ class Step {
 class Power {
   final String units;
 
-  final double? value;
+  final unit_locale.Power? value;
 
   final double? max;
 
   final double? min;
 
+  final String? colour;
+
+  final double? end;
+
+  final double? start;
+
   Power({
     required this.units,
     this.value,
+    this.colour,
     this.max,
     this.min,
+    this.end,
+    this.start,
   });
 
-  factory Power.fromJson(Map<String, dynamic> json) {
+  factory Power.fromJson(Map<String, dynamic> json, List<ZoneTimes> zoneTimes) {
+    String u = json['units'] as String;
+    double? v = (json['value'] is int)
+        ? json['value'].toDouble()
+        : json['value'] as double?;
+
+    unit_locale.Power? valAsUnit = null;
+
+    if(u == '%ftp' && v != null) {
+      valAsUnit = unit_locale.Power.fromPercentOfFtp(v, zoneTimes);
+    } else if(u == 'w') {
+      valAsUnit = (v == null) ? null : unit_locale.Power(valueInWatts: v!);
+    } else if (v != null && u != 'power_zone') {
+      throw ArgumentError('Unknown power unit: $u');
+    }
+
     return Power(
       units: json['units'] as String,
-      value: (json['value'] is int)
-          ? json['value'].toDouble()
-          : json['value'] as double?,
+      value: valAsUnit,
+      colour: v == null ? null : _getColourFromZone(v!, zoneTimes),
       max: (json['value'] is int)
           ? json['value'].toDouble()
           : json['value'] as double?,
       min: (json['value'] is int)
           ? json['value'].toDouble()
           : json['value'] as double?,
+      end: (json['end'] is int)
+          ? json['end'].toDouble()
+          : json['end'] as double?,
+      start: (json['start'] is int)
+          ? json['start'].toDouble()
+          : json['start'] as double?,
     );
   }
-}
 
+  static String _getColourFromZone(double val, List<ZoneTimes> zoneTimes) {
+    // Order by minWatts
+    zoneTimes.sort((a, b) => (a.minWatts ?? 0).compareTo((b.minWatts ?? 0)));
+
+    // First zoneTime where max is greater than v
+    ZoneTimes zoneTime = zoneTimes.firstWhere((zoneTime) => (zoneTime.max ?? 0) >= val);
+
+    return zoneTime.color ?? 'grey';
+  }
+
+}
 
 // TODO Ensure I've captured all the possible values, and handle the case where the value is not found
 enum EventCategory {
-  target, race_a, race_b, race_c, note,workout, season_start, sick;
+  target,
+  race_a,
+  race_b,
+  race_c,
+  note,
+  workout,
+  season_start,
+  sick;
 }
